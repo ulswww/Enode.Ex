@@ -49,6 +49,7 @@ namespace ENode.Ex.Postgres
             int tableCount = 1,
             string versionIndexName = "IX_EventStream_AggId_Version",
             string commandIndexName = "IX_EventStream_AggId_CommandId",
+            int bulkCopyBatchSize = 1000,
             int batchInsertTimeoutSeconds = 60)
         {
             ((PostgresEventStore)ObjectContainer.Resolve<IEventStore>()).Initialize(
@@ -57,6 +58,7 @@ namespace ENode.Ex.Postgres
                 tableCount,
                 versionIndexName,
                 commandIndexName,
+                bulkCopyBatchSize,
                 batchInsertTimeoutSeconds);
             return eNodeConfiguration;
         }

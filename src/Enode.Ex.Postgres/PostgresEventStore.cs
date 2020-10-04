@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Data;
 using Dapper;
 using ECommon.Components;
 using ECommon.DapperEx;
@@ -29,6 +30,7 @@ namespace ENode.Ex.Postgres
         private int _tableCount;
         private string _versionIndexName;
         private string _commandIndexName;
+        private int _bulkCopyBatchSize;
         private int _batchInsertTimeoutSeconds;
         private IJsonSerializer _jsonSerializer;
         private IEventSerializer _eventSerializer;
@@ -45,6 +47,7 @@ namespace ENode.Ex.Postgres
             int tableCount = 1,
             string versionIndexName = "IX_EventStream_AggId_Version",
             string commandIndexName = "IX_EventStream_AggId_CommandId",
+            int bulkCopyBatchSize = 1000,
             int batchInsertTimeoutSeconds = 60)
         {
             _connectionString = connectionString;
@@ -52,6 +55,7 @@ namespace ENode.Ex.Postgres
             _tableCount = tableCount;
             _versionIndexName = versionIndexName;
             _commandIndexName = commandIndexName;
+            _bulkCopyBatchSize = bulkCopyBatchSize;
             _batchInsertTimeoutSeconds = batchInsertTimeoutSeconds;
 
             Ensure.NotNull(_connectionString, "_connectionString");
@@ -59,6 +63,7 @@ namespace ENode.Ex.Postgres
             Ensure.Positive(_tableCount, "_tableCount");
             Ensure.NotNull(_versionIndexName, "_versionIndexName");
             Ensure.NotNull(_commandIndexName, "_commandIndexName");
+            Ensure.Positive(_bulkCopyBatchSize, "_bulkCopyBatchSize");
             Ensure.Positive(_batchInsertTimeoutSeconds, "_batchInsertTimeoutSeconds");
 
             _jsonSerializer = ObjectContainer.Resolve<IJsonSerializer>();
@@ -213,15 +218,19 @@ namespace ENode.Ex.Postgres
             try
             {
                 string sql = string.Format(InsertEventSql, GetTableName(aggregateRootId));
-                var streamRecords = eventStreamList.Select(ConvertTo);
+                var streamRecords = eventStreamList.Select(ConvertTo).ToArray();
                 using (var connection = GetConnection())
                 {
                     await connection.OpenAsync().ConfigureAwait(false);
                     var transaction = await Task.Run(() => connection.BeginTransaction()).ConfigureAwait(false);
                     try
                     {
-                        await connection.ExecuteAsync(sql, streamRecords, transaction: transaction, commandTimeout: _batchInsertTimeoutSeconds).ConfigureAwait(false);
+                        //await connection.ExecuteAsync(sql, streamRecords, transaction: transaction, commandTimeout: _batchInsertTimeoutSeconds).ConfigureAwait(false);
+
+                        BulkInsert(connection, aggregateRootId, streamRecords);
+
                         await Task.Run(() => transaction.Commit()).ConfigureAwait(false);
+
                         return EventAppendStatus.Success;
                     }
                     catch
@@ -251,6 +260,45 @@ namespace ENode.Ex.Postgres
                 throw;
             }
         }
+
+        private void BulkInsert(NpgsqlConnection connection, string aggregateRootId, StreamRecord[] eventStreamList)
+        {
+            int index = 0;
+
+            var copyHelper = new PgBulkCopyHelper<StreamRecord>("public", GetTableName(aggregateRootId));
+
+            var dataTable = new System.Data.DataTable();
+            do
+            {
+                var count = eventStreamList.Length - index;
+
+                StreamRecord[] copyArray = null;
+
+                if (count > _bulkCopyBatchSize)
+                {
+                    copyArray = eventStreamList.Skip(index).Take(_bulkCopyBatchSize).ToArray();
+
+                    index += _bulkCopyBatchSize;
+                }
+                else
+                {
+                    copyArray = eventStreamList.Skip(index).ToArray();
+
+                    index = 0;
+                }
+                
+                if (copyArray.Length > 0)
+                {
+                    copyHelper.FillDataTable(copyArray, dataTable);
+
+                    copyHelper.BulkInsert(connection, dataTable);
+                }
+
+                dataTable.Clear();
+            }
+            while (index > 0);
+        }
+
         private Task TryFindEventByCommandIdAsync(string aggregateRootId, string commandId, IList<string> duplicateCommandIds, int retryTimes)
         {
             var taskCompletionSource = new TaskCompletionSource<bool>();
