@@ -16,7 +16,7 @@ namespace Enode.Ex.Dapper
     public static class SqlMapperExtensions
     {
         private static ISqlDialect _defaultSqlDialect = new SqlDialect();
-        public static string DelimitedDefault(this string objectName,ISqlDialect sqlDialect = null)
+        public static string Delimited(this string objectName,ISqlDialect sqlDialect = null)
         {
             var dialect = sqlDialect??_defaultSqlDialect;
             return dialect.GetDelimited(objectName);
@@ -40,7 +40,7 @@ namespace Enode.Ex.Dapper
         {
             var obj = data as object;
             var properties = GetProperties(obj);
-            var columns = string.Join(",", properties.Select(p=>DelimitedDefault(p,sqlDialect)));
+            var columns = string.Join(",", properties.Select(p=>Delimited(p,sqlDialect)));
             var values = string.Join(",", properties.Select(p => "@" + p));
             var sql = string.Format("insert into {0} ({1}) values ({2})", table, columns, values);
 
@@ -58,7 +58,7 @@ namespace Enode.Ex.Dapper
         {
             var obj = data as object;
             var properties = GetProperties(obj);
-            var columns = string.Join(",", properties.Select(p=>DelimitedDefault(p,sqlDialect)));
+            var columns = string.Join(",", properties.Select(p=>Delimited(p,sqlDialect)));
             var values = string.Join(",", properties.Select(p => "@" + p));
             var sql = string.Format("insert into {0} ({1}) values ({2})", table, columns, values);
 
@@ -85,12 +85,12 @@ namespace Enode.Ex.Dapper
             var updateProperties = updatePropertyInfos.Select(p => p.Name);
             var whereProperties = wherePropertyInfos.Select(p => p.Name);
 
-            var updateFields = string.Join(",", updateProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
+            var updateFields = string.Join(",", updateProperties.Select(p => Delimited(p,sqlDialect) + " = @" + p));
             var whereFields = string.Empty;
 
             if (whereProperties.Any())
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @w_" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p,sqlDialect) + " = @w_" + p));
             }
 
             var sql = string.Format("update {0} set {1}{2}", table, updateFields, whereFields);
@@ -122,12 +122,12 @@ namespace Enode.Ex.Dapper
             var updateProperties = updatePropertyInfos.Select(p => p.Name);
             var whereProperties = wherePropertyInfos.Select(p => p.Name);
 
-            var updateFields = string.Join(",", updateProperties.Select(p => p + " = @" + p));
+            var updateFields = string.Join(",", updateProperties.Select(p => Delimited(p,sqlDialect) + " = @" + p));
             var whereFields = string.Empty;
 
             if (whereProperties.Any())
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @w_" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p,sqlDialect) + " = @w_" + p));
             }
 
             var sql = string.Format("update {0} set {1}{2}", table, updateFields, whereFields);
@@ -155,7 +155,7 @@ namespace Enode.Ex.Dapper
             var whereProperties = GetProperties(conditionObj);
             if (whereProperties.Count > 0)
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p,sqlDialect) + " = @" + p));
             }
 
             var sql = string.Format("delete from {0}{1}", table, whereFields);
@@ -177,7 +177,7 @@ namespace Enode.Ex.Dapper
             var whereProperties = GetProperties(conditionObj);
             if (whereProperties.Count > 0)
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p,sqlDialect) + " = @" + p));
             }
 
             var sql = string.Format("delete from {0}{1}", table, whereFields);
@@ -273,7 +273,7 @@ namespace Enode.Ex.Dapper
 
         private static string BuildQuerySQL(dynamic condition, string table, string selectPart = "*", bool isOr = false,ISqlDialect sqlDialect = null)
         {
-            table = DelimitedDefault(table,sqlDialect);
+            table = Delimited(table,sqlDialect);
             var conditionObj = condition as object;
             var properties = GetProperties(conditionObj);
             if (properties.Count == 0)
@@ -282,7 +282,7 @@ namespace Enode.Ex.Dapper
             }
 
             var separator = isOr ? " OR " : " AND ";
-            var wherePart = string.Join(separator, properties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
+            var wherePart = string.Join(separator, properties.Select(p => Delimited(p,sqlDialect) + " = @" + p));
 
             return string.Format("SELECT {2} FROM {0} WHERE {1}", table, wherePart, selectPart);
         }

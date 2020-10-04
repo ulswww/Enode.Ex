@@ -120,7 +120,7 @@ namespace ECommon.DapperEx
             var updateProperties = updatePropertyInfos.Select(p => p.Name);
             var whereProperties = wherePropertyInfos.Select(p => p.Name);
 
-            var updateFields = string.Join(",", updateProperties.Select(p => p + " = @" + p));
+            var updateFields = string.Join(",", updateProperties.Select(p => Delimited(p) + " = @" + p));
             var whereFields = string.Empty;
 
             if (whereProperties.Any())
