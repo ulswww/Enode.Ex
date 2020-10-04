@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapper;
+using Enode.Ex.Dapper.Impl;
 
 namespace Enode.Ex.Dapper
 {
@@ -14,15 +15,16 @@ namespace Enode.Ex.Dapper
     /// </summary>
     public static class SqlMapperExtensions
     {
-        public static string LeftlimitedIdentifer = "\"";
-        public static string ReightlimitedIdentifer = "\"";
-
-        public static string Delimited(this string objectName)
+        private static ISqlDialect _defaultSqlDialect = new SqlDialect();
+        public static string DelimitedDefault(this string objectName,ISqlDialect sqlDialect = null)
         {
-            if (objectName.StartsWith(LeftlimitedIdentifer))
-                return objectName;
+            var dialect = sqlDialect??_defaultSqlDialect;
+            return dialect.GetDelimited(objectName);
+        }
 
-            return $"{LeftlimitedIdentifer}{objectName}{ReightlimitedIdentifer}";
+        public static void SetDelimitedDefault(string leftDelimitedIdentifier,string rightDelimitedIdentifier)
+        {
+           _defaultSqlDialect = new SqlDialect(leftDelimitedIdentifier,rightDelimitedIdentifier);
         }
         private static readonly ConcurrentDictionary<Type, List<PropertyInfo>> _paramCache = new ConcurrentDictionary<Type, List<PropertyInfo>>();
 
@@ -34,11 +36,11 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static long Insert(this IDbConnection connection, dynamic data, string table, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static long Insert(this IDbConnection connection, dynamic data, string table, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
             var obj = data as object;
             var properties = GetProperties(obj);
-            var columns = string.Join(",", properties.Select(p=>Delimited(p)));
+            var columns = string.Join(",", properties.Select(p=>DelimitedDefault(p,sqlDialect)));
             var values = string.Join(",", properties.Select(p => "@" + p));
             var sql = string.Format("insert into {0} ({1}) values ({2})", table, columns, values);
 
@@ -52,11 +54,11 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<long> InsertAsync(this IDbConnection connection, dynamic data, string table, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<long> InsertAsync(this IDbConnection connection, dynamic data, string table, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
             var obj = data as object;
             var properties = GetProperties(obj);
-            var columns = string.Join(",", properties.Select(p=>Delimited(p)));
+            var columns = string.Join(",", properties.Select(p=>DelimitedDefault(p,sqlDialect)));
             var values = string.Join(",", properties.Select(p => "@" + p));
             var sql = string.Format("insert into {0} ({1}) values ({2})", table, columns, values);
 
@@ -72,7 +74,7 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static int Update(this IDbConnection connection, dynamic data, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int Update(this IDbConnection connection, dynamic data, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
             var obj = data as object;
             var conditionObj = condition as object;
@@ -83,12 +85,12 @@ namespace Enode.Ex.Dapper
             var updateProperties = updatePropertyInfos.Select(p => p.Name);
             var whereProperties = wherePropertyInfos.Select(p => p.Name);
 
-            var updateFields = string.Join(",", updateProperties.Select(p => Delimited(p) + " = @" + p));
+            var updateFields = string.Join(",", updateProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
             var whereFields = string.Empty;
 
             if (whereProperties.Any())
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p) + " = @w_" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @w_" + p));
             }
 
             var sql = string.Format("update {0} set {1}{2}", table, updateFields, whereFields);
@@ -109,7 +111,7 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<int> UpdateAsync(this IDbConnection connection, dynamic data, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> UpdateAsync(this IDbConnection connection, dynamic data, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
             var obj = data as object;
             var conditionObj = condition as object;
@@ -125,7 +127,7 @@ namespace Enode.Ex.Dapper
 
             if (whereProperties.Any())
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p) + " = @w_" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @w_" + p));
             }
 
             var sql = string.Format("update {0} set {1}{2}", table, updateFields, whereFields);
@@ -146,14 +148,14 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static int Delete(this IDbConnection connection, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int Delete(this IDbConnection connection, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
             var conditionObj = condition as object;
             var whereFields = string.Empty;
             var whereProperties = GetProperties(conditionObj);
             if (whereProperties.Count > 0)
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p) + " = @" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
             }
 
             var sql = string.Format("delete from {0}{1}", table, whereFields);
@@ -168,14 +170,14 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<int> DeleteAsync(this IDbConnection connection, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> DeleteAsync(this IDbConnection connection, dynamic condition, string table, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
             var conditionObj = condition as object;
             var whereFields = string.Empty;
             var whereProperties = GetProperties(conditionObj);
             if (whereProperties.Count > 0)
             {
-                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => Delimited(p) + " = @" + p));
+                whereFields = " where " + string.Join(" and ", whereProperties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
             }
 
             var sql = string.Format("delete from {0}{1}", table, whereFields);
@@ -192,9 +194,9 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static int GetCount(this IDbConnection connection, object condition, string table, bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int GetCount(this IDbConnection connection, object condition, string table, bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
-            return QueryList<int>(connection, condition, table, "count(*)", isOr, transaction, commandTimeout).Single();
+            return QueryList<int>(connection, condition, table, "count(*)", isOr, transaction, commandTimeout,sqlDialect).Single();
         }
         /// <summary>Get data count async from table with a specified condition.
         /// </summary>
@@ -205,9 +207,9 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<int> GetCountAsync(this IDbConnection connection, object condition, string table, bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> GetCountAsync(this IDbConnection connection, object condition, string table, bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
-            return QueryListAsync<int>(connection, condition, table, "count(*)", isOr, transaction, commandTimeout).ContinueWith<int>(t => t.Result.Single());
+            return QueryListAsync<int>(connection, condition, table, "count(*)", isOr, transaction, commandTimeout,sqlDialect).ContinueWith<int>(t => t.Result.Single());
         }
 
         /// <summary>Query a list of data from table with a specified condition.
@@ -220,9 +222,9 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static IEnumerable<dynamic> QueryList(this IDbConnection connection, dynamic condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static IEnumerable<dynamic> QueryList(this IDbConnection connection, dynamic condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
-            return QueryList<dynamic>(connection, condition, table, columns, isOr, transaction, commandTimeout);
+            return QueryList<dynamic>(connection, condition, table, columns, isOr, transaction, commandTimeout,sqlDialect);
         }
         /// <summary>Query a list of data async from table with a specified condition.
         /// </summary>
@@ -234,9 +236,9 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<IEnumerable<dynamic>> QueryListAsync(this IDbConnection connection, dynamic condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<IEnumerable<dynamic>> QueryListAsync(this IDbConnection connection, dynamic condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
-            return QueryListAsync<dynamic>(connection, condition, table, columns, isOr, transaction, commandTimeout);
+            return QueryListAsync<dynamic>(connection, condition, table, columns, isOr, transaction, commandTimeout,sqlDialect);
         }
         /// <summary>Query a list of data from table with specified condition.
         /// </summary>
@@ -249,9 +251,9 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static IEnumerable<T> QueryList<T>(this IDbConnection connection, object condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static IEnumerable<T> QueryList<T>(this IDbConnection connection, object condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
-            return connection.Query<T>(BuildQuerySQL(condition, table, columns, isOr), condition, transaction, true, commandTimeout);
+            return connection.Query<T>(BuildQuerySQL(condition, table, columns, isOr,sqlDialect), condition, transaction, true, commandTimeout);
         }
         /// <summary>Query a list of data async from table with specified condition.
         /// </summary>
@@ -264,14 +266,14 @@ namespace Enode.Ex.Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<IEnumerable<T>> QueryListAsync<T>(this IDbConnection connection, object condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<IEnumerable<T>> QueryListAsync<T>(this IDbConnection connection, object condition, string table, string columns = "*", bool isOr = false, IDbTransaction transaction = null, int? commandTimeout = null,ISqlDialect sqlDialect = null)
         {
-            return connection.QueryAsync<T>(BuildQuerySQL(condition, table, columns, isOr), condition, transaction, commandTimeout);
+            return connection.QueryAsync<T>(BuildQuerySQL(condition, table, columns, isOr,sqlDialect), condition, transaction, commandTimeout);
         }
 
-        private static string BuildQuerySQL(dynamic condition, string table, string selectPart = "*", bool isOr = false)
+        private static string BuildQuerySQL(dynamic condition, string table, string selectPart = "*", bool isOr = false,ISqlDialect sqlDialect = null)
         {
-            table = Delimited(table);
+            table = DelimitedDefault(table,sqlDialect);
             var conditionObj = condition as object;
             var properties = GetProperties(conditionObj);
             if (properties.Count == 0)
@@ -280,7 +282,7 @@ namespace Enode.Ex.Dapper
             }
 
             var separator = isOr ? " OR " : " AND ";
-            var wherePart = string.Join(separator, properties.Select(p => Delimited(p) + " = @" + p));
+            var wherePart = string.Join(separator, properties.Select(p => DelimitedDefault(p,sqlDialect) + " = @" + p));
 
             return string.Format("SELECT {2} FROM {0} WHERE {1}", table, wherePart, selectPart);
         }
