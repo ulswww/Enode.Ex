@@ -13,6 +13,7 @@ using ECommon.Serializing;
 using ECommon.Utilities;
 using ENode.Eventing;
 using Npgsql;
+using System.Globalization;
 
 namespace ENode.Ex.Postgres
 {
@@ -264,10 +265,6 @@ namespace ENode.Ex.Postgres
         private void BulkInsert(NpgsqlConnection connection, string aggregateRootId, StreamRecord[] eventStreamList)
         {
             int index = 0;
-
-            var copyHelper = new PgBulkCopyHelper<StreamRecord>("public", GetTableName(aggregateRootId));
-
-            var dataTable = new System.Data.DataTable();
             do
             {
                 var count = eventStreamList.Length - index;
@@ -286,15 +283,29 @@ namespace ENode.Ex.Postgres
 
                     index = 0;
                 }
-                
+
                 if (copyArray.Length > 0)
                 {
-                    copyHelper.FillDataTable(copyArray, dataTable);
+                    var commandFormat = string.Format(CultureInfo.InvariantCulture, "COPY \"EventStream1\" (\"AggregateRootTypeName\",\"AggregateRootId\",\"Version\",\"CommandId\",\"CreatedOn\",\"Events\") FROM STDIN BINARY");
+                    using (var writer = connection.BeginBinaryImport(commandFormat))
+                    {
 
-                    copyHelper.BulkInsert(connection, dataTable);
+                        foreach (var item in copyArray)
+                        {
+                            writer.StartRow();
+
+                            writer.Write(item.AggregateRootTypeName, NpgsqlTypes.NpgsqlDbType.Varchar);
+                            writer.Write(item.AggregateRootId, NpgsqlTypes.NpgsqlDbType.Varchar);
+                            writer.Write(item.Version, NpgsqlTypes.NpgsqlDbType.Bigint);
+                            writer.Write(item.CommandId, NpgsqlTypes.NpgsqlDbType.Varchar);
+                            writer.Write(item.CreatedOn, NpgsqlTypes.NpgsqlDbType.Timestamp);
+                            writer.Write(item.Events, NpgsqlTypes.NpgsqlDbType.Varchar);
+
+                        }
+
+                        writer.Complete();
+                    }
                 }
-
-                dataTable.Clear();
             }
             while (index > 0);
         }

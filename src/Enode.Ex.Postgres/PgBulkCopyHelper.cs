@@ -28,6 +28,8 @@ namespace ENode.Ex.Postgres
         /// </summary>
         public string FullTableName { get; set; }
 
+        
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -53,6 +55,19 @@ namespace ENode.Ex.Postgres
                 else
                     FullTableName = string.Format("{0}.{1}", schema, tableName);
             }
+            FullTableName = Delimited(FullTableName);
+        }
+
+        string Delimited(string objName)
+        {
+            var dotindex = objName.IndexOf(".");
+            if(dotindex < 0)
+              return $"\"{objName}\"";
+
+            var scheme = objName.Substring(0,dotindex);
+            var table = objName.Substring(dotindex+1);
+
+            return $"{scheme}.\"{table}\"";
         }
 
         /// <summary>
@@ -135,11 +150,22 @@ namespace ENode.Ex.Postgres
         /// <param name="dataTable">数据表</param>
         public void BulkInsert(NpgsqlConnection conn, DataTable dataTable)
         {
-            var commandFormat = string.Format(CultureInfo.InvariantCulture, "COPY {0} FROM STDIN BINARY", FullTableName);
+            var columns = "";
+            foreach (var item in PropNames)
+            {
+                if(item == "Id")
+                  continue;
+
+                columns+=$"\"{item}\",";
+            }
+            columns = columns.TrimEnd(',');
+            var commandFormat = string.Format(CultureInfo.InvariantCulture, "COPY {0} ({1}) FROM STDIN BINARY", FullTableName,columns);
             using (var writer = conn.BeginBinaryImport(commandFormat))
             {
                 foreach (DataRow item in dataTable.Rows)
                     writer.WriteRow(item.ItemArray);
+
+                writer.Complete();
             }
         }
     }
