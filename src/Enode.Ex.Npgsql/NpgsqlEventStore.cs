@@ -286,7 +286,7 @@ namespace Enode.Ex.Npgsql
 
                 if (copyArray.Length > 0)
                 {
-                    var commandFormat = string.Format(CultureInfo.InvariantCulture, "COPY \"EventStream1\" (\"AggregateRootTypeName\",\"AggregateRootId\",\"Version\",\"CommandId\",\"CreatedOn\",\"Events\") FROM STDIN BINARY");
+                    var commandFormat = string.Format(CultureInfo.InvariantCulture, "COPY \"EventStream\" (\"AggregateRootTypeName\",\"AggregateRootId\",\"Version\",\"CommandId\",\"CreatedOn\",\"Events\") FROM STDIN BINARY");
                     using (var writer = connection.BeginBinaryImport(commandFormat))
                     {
 
