@@ -9,7 +9,7 @@ using System.Reflection;
 namespace Enode.Ex.Npgsql
 {
     /// <summary>
-    /// 用以快速将大批量数据插入到postgresql中
+    /// 用以快速将大批量数据插入到Npgsqlql中
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     public class PgBulkCopyHelper<TEntity>
@@ -143,10 +143,10 @@ namespace Enode.Ex.Npgsql
         }
 
         /// <summary>
-        /// 通过PostgreSQL连接把dataTable中的数据整块填充到数据库对应的数据表中
+        /// 通过NpgsqlQL连接把dataTable中的数据整块填充到数据库对应的数据表中
         /// 注意，该函数不负责NpgsqlConnection的创建、打开以及关闭
         /// </summary>
-        /// <param name="conn">PostgreSQL连接</param>
+        /// <param name="conn">NpgsqlQL连接</param>
         /// <param name="dataTable">数据表</param>
         public void BulkInsert(NpgsqlConnection conn, DataTable dataTable)
         {

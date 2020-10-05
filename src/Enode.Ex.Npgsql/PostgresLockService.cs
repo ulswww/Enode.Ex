@@ -13,7 +13,7 @@ using ENode.Infrastructure;
 
 namespace Enode.Ex.Npgsql
 {
-    public class PostgresLockService : ILockService
+    public class NpgsqlLockService : ILockService
     {
         #region Private Variables
 
@@ -24,7 +24,7 @@ namespace Enode.Ex.Npgsql
 
         #endregion
 
-        public PostgresLockService Initialize(string connectionString, string tableName = "LockKey")
+        public NpgsqlLockService Initialize(string connectionString, string tableName = "LockKey")
         {
             _connectionString = connectionString;
             _tableName = tableName ;

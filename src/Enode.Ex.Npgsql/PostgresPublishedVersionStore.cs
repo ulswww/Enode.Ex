@@ -12,7 +12,7 @@ using ENode.Infrastructure;
 
 namespace Enode.Ex.Npgsql
 {
-    public class PostgresPublishedVersionStore : IPublishedVersionStore
+    public class NpgsqlPublishedVersionStore : IPublishedVersionStore
     {
         private const string EventSingleTableNameFormat = "\"{0}\"";
         private const string EventTableNameFormat = "\"{0}_{1}\"";
@@ -29,7 +29,7 @@ namespace Enode.Ex.Npgsql
 
         #endregion
 
-        public PostgresPublishedVersionStore Initialize(string connectionString, string tableName = "PublishedVersion", int tableCount = 1, string uniqueIndexName = "IX_PublishedVersion_AggId_Version")
+        public NpgsqlPublishedVersionStore Initialize(string connectionString, string tableName = "PublishedVersion", int tableCount = 1, string uniqueIndexName = "IX_PublishedVersion_AggId_Version")
         {
             _connectionString = connectionString;
             _tableName = tableName;

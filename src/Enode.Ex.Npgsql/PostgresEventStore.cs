@@ -17,7 +17,7 @@ using System.Globalization;
 
 namespace Enode.Ex.Npgsql
 {
-    public class PostgresEventStore : IEventStore
+    public class NpgsqlEventStore : IEventStore
     {
         private const string EventSingleTableNameFormat = "\"{0}\"";
         private const string EventTableNameFormat = "\"{0}_{1}\"";
@@ -42,7 +42,7 @@ namespace Enode.Ex.Npgsql
 
         #region Public Methods
 
-        public PostgresEventStore Initialize(
+        public NpgsqlEventStore Initialize(
             string connectionString,
             string tableName = "EventStream",
             int tableCount = 1,

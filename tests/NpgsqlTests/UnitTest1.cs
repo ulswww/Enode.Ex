@@ -16,7 +16,7 @@ namespace NpgsqlTests
         {
             var rs = GetRecords(9990);
             
-            var connectstr = "Host=192.168.3.5;Port=15432;Username=postgres;Password=123;Database=postgres";
+            var connectstr = "Host=192.168.3.5;Port=15432;Username=Npgsql;Password=123;Database=Npgsql";
    
             using (var connection = new NpgsqlConnection(connectstr))
             {
