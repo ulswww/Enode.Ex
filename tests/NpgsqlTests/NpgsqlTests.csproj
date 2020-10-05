@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Enode.Ex.Postgres\ENode.Ex.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\Enode.Ex.Npgsql\Enode.Ex.Npgsql.csproj" />
   </ItemGroup>
 
 </Project>

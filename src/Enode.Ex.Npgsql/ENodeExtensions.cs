@@ -3,7 +3,7 @@ using ENode.Configurations;
 using ENode.Eventing;
 using ENode.Infrastructure;
 
-namespace ENode.Ex.Postgres
+namespace Enode.Ex.Npgsql
 {
     public static class ENodeExtensions
     {

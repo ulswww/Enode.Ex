@@ -11,7 +11,7 @@ using ECommon.IO;
 using ECommon.Utilities;
 using ENode.Infrastructure;
 
-namespace ENode.Ex.Postgres
+namespace Enode.Ex.Npgsql
 {
     public class PostgresLockService : ILockService
     {

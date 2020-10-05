@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
-namespace ENode.Ex.Postgres
+namespace Enode.Ex.Npgsql
 {
     /// <summary>
     /// 用以快速将大批量数据插入到postgresql中

@@ -15,7 +15,7 @@ using ENode.Eventing;
 using Npgsql;
 using System.Globalization;
 
-namespace ENode.Ex.Postgres
+namespace Enode.Ex.Npgsql
 {
     public class PostgresEventStore : IEventStore
     {

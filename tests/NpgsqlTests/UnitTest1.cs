@@ -3,7 +3,6 @@ using System.Data;
 using Xunit;
 using Npgsql;
 using System.Collections.Generic;
-using ENode.Ex.Postgres;
 using System.Globalization;
 using System.Reflection;
 using System.Linq;
@@ -16,25 +15,18 @@ namespace NpgsqlTests
         public void Test1()
         {
             var rs = GetRecords(9990);
+            
             var connectstr = "Host=192.168.3.5;Port=15432;Username=postgres;Password=123;Database=postgres";
-            var helper = new PgBulkCopyHelper<StreamRecord>(null, "EventStream");
-
-            DataTable dataTable = helper.InitDataTable();
+   
             using (var connection = new NpgsqlConnection(connectstr))
             {
                 connection.Open();
-
-                DataTable dataTable1 = new DataTable();
-                dataTable1.Columns.Add("AggregateRootId");
-                dataTable1.Columns.Add("AggregateRootName");
-
-                helper.FillDataTable(rs,dataTable);
 
                 BulkInsert(connection,"ssdsf",rs.ToArray());
             }
         }
 
-        int _bulkCopyBatchSize = 100;
+        int _bulkCopyBatchSize = 1000;
 
           private void BulkInsert(NpgsqlConnection connection, string aggregateRootId, StreamRecord[] eventStreamList)
         {
