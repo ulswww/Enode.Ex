@@ -70,7 +70,7 @@ namespace NpgsqlTests
 
                             writer.Write(item.AggregateRootTypeName, NpgsqlTypes.NpgsqlDbType.Varchar);
                             writer.Write(item.AggregateRootId, NpgsqlTypes.NpgsqlDbType.Varchar);
-                            writer.Write(item.Version, NpgsqlTypes.NpgsqlDbType.Bigint);
+                            writer.Write(item.Version, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(item.CommandId, NpgsqlTypes.NpgsqlDbType.Varchar);
                             writer.Write(item.CreatedOn, NpgsqlTypes.NpgsqlDbType.Timestamp);
                             writer.Write(item.Events, NpgsqlTypes.NpgsqlDbType.Varchar);

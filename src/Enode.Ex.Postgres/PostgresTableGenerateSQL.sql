@@ -2,7 +2,7 @@ CREATE TABLE public."EventStream" (
 	"Sequence"              bigserial              	NOT NULL,
 	"AggregateRootTypeName" varchar(256)			NOT NULL,
 	"AggregateRootId"       varchar(36) 			NOT NULL,
-	"Version" 				int8 					NOT NULL,
+	"Version" 				int4 					NOT NULL,
 	"CommandId" 			varchar(36) 			NOT NULL,
 	"CreatedOn" 			timestamp 				NOT NULL,
 	"Events" 				text 					NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE public."PublishedVersion" (
     "ProcessorName"           varchar (128)         NOT NULL,
     "AggregateRootTypeName"   varchar (256)         NOT NULL,
     "AggregateRootId"         varchar (36)          NOT NULL,
-    "Version"                 int8                  NOT NULL,
+    "Version"                 int4                  NOT NULL,
     "CreatedOn"               timestamp             NOT NULL,
     "UpdatedOn"               timestamp             NOT NULL,
 	CONSTRAINT "PK_PublishedVersion" PRIMARY KEY ("Sequence")
