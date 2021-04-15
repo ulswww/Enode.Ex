@@ -1,4 +1,7 @@
-﻿using ECommon.Components;
+﻿using System;
+using AggregateSnapshotStore;
+using ECommon.Components;
+using ENode.AggregateSnapshotStore;
 using ENode.Configurations;
 using ENode.Eventing;
 using ENode.Infrastructure;
@@ -95,6 +98,48 @@ namespace Enode.Ex.Npgsql
         {
             ((NpgsqlLockService)ObjectContainer.Resolve<ILockService>()).Initialize(connectionString, tableName);
             return eNodeConfiguration;
+        }
+        public static ENodeConfiguration UseNpgsqlAggregateSnapshotStore(this ENodeConfiguration enodeConfiguration)
+        {
+            var configuration = enodeConfiguration.GetCommonConfiguration();
+            enodeConfiguration.UseAggregateSnapshotStore<NpgsqlAggregateSnapshotStore>();
+            configuration.SetDefault<IAggregateSnapshotRequestFilter, DefaultAggregateSnapshotRequestFilter>((string)null);
+            configuration.SetDefault<IAggregateSnapshotRequestQueue, DefaultAggregateSnapshotRequestProcessor>((string)null);
+            return enodeConfiguration;
+        }
+
+        public static ENodeConfiguration InitializeNpgsqlAggregateSnapshotStore(this ENodeConfiguration enodeConfiguration, string connectionString, string[]  aggregateTypeNames)
+        {
+            enodeConfiguration.InitializeAggregateSnapshotStore<NpgsqlAggregateSnapshotStore>(s =>
+            s.Initialize(
+                connectionString,
+                aggregateTypeNames:aggregateTypeNames
+            ));
+
+            ((DefaultAggregateSnapshotSaver)ObjectContainer.Resolve<IAggregateSnapshotSaver>()).Initialize(1);
+            ((DefaultAggregateSnapshotRequestProcessor)ObjectContainer.Resolve<IAggregateSnapshotRequestQueue>()).Initialize(
+                TimeSpan.FromSeconds(3),
+                ObjectContainer.Resolve<IAggregateSnapshotRequestFilter>(),
+                ObjectContainer.Resolve<IAggregateSnapshotSaver>()
+            );
+            ((DefaultAggregateSnapshotRequestFilter)ObjectContainer.Resolve<IAggregateSnapshotRequestFilter>()).Initialize(
+                20,
+                ObjectContainer.Resolve<IAggregateSnapshotStore>()
+            );
+            return enodeConfiguration;
+        }
+
+        public static ENodeConfiguration StartAggregateSnapshotRequestProcessor(this ENodeConfiguration enodeConfiguration)
+        {
+            ((DefaultAggregateSnapshotRequestProcessor)ObjectContainer.Resolve<IAggregateSnapshotRequestQueue>()).Start();
+            return enodeConfiguration;
+        }
+
+        public static ENodeConfiguration ShutdownAggregateSnapshotRequestProcessor(this ENodeConfiguration enodeConfiguration)
+        {
+            ((DefaultAggregateSnapshotRequestProcessor)ObjectContainer.Resolve<IAggregateSnapshotRequestQueue>()).Stop();
+
+            return enodeConfiguration;
         }
     }
 }

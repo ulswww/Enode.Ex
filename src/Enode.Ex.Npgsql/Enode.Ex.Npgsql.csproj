@@ -1,25 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.6.0.0</Version>
-    <AssemblyVersion>1.6.0.0</AssemblyVersion>
-    <FileVersion>1.6.0.0</FileVersion>
+    <TargetFramework>.net5.0</TargetFramework>
+    <Version>5.0.0.0</Version>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
+    <FileVersion>5.0.0.0</FileVersion>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\Enode.Ex.Npgsql.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\.net5.0\Enode.Ex.Npgsql.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AggregateSnapshotStore" Version="1.0.1" />
+    <PackageReference Include="ENode.AggregateSnapshotStore" Version="1.0.1" />
     <PackageReference Include="ECommon" Version="2.6.4" />
     <PackageReference Include="Dapper" Version="2.0.30" />
     <PackageReference Include="Npgsql" Version="5.0.3" />
     <PackageReference Include="enode" Version="3.0.2" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.4.0" />
   </ItemGroup>
+  
+  <!-- <ItemGroup>
+    <ProjectReference Include="..\Snapshots\AggregateSnapshotStore\AggregateSnapshotStore.csproj" />
+    <ProjectReference Include="..\Snapshots\ENode.AggregateSnapshotStore\ENode.AggregateSnapshotStore.csproj" />
+  </ItemGroup> -->
 
 </Project>

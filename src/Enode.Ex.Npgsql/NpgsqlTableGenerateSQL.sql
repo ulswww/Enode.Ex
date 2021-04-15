@@ -29,4 +29,13 @@ CREATE TABLE public."LockKey" (
     "Name"                   varchar (128)          NOT NULL,
     CONSTRAINT "PK_LockKey" PRIMARY KEY ("Name")
 );
-;
+--------------------------------
+CREATE TABLE "AggregateSnapshot" (
+    "Sequence"                bigserial             NOT NULL,
+    "AggregateRootTypeName"   varchar (256)         NOT NULL,
+    "AggregateRootId"         varchar (36)          NOT NULL,
+    "Version"                 int4                  NOT NULL,
+    "Data"                  bytea NOT NULL,
+    CONSTRAINT "PK_AggregateSnapshot" PRIMARY KEY ("Sequence")
+) ;
+CREATE UNIQUE INDEX "IX_AggregateSnapshot_AggId"   on public."AggregateSnapshot" ("AggregateRootId" ASC);;

@@ -82,17 +82,20 @@ namespace Enode.Ex.Npgsql
             {
                 try
                 {
+                    IEnumerable<StreamRecord> result = null;
                     using (var connection = GetConnection())
                     {
                         await connection.OpenAsync().ConfigureAwait(false);
-                        var result = await connection.QueryAsync<StreamRecord>(sql, new
+                        result = await connection.QueryAsync<StreamRecord>(sql, new
                         {
                             AggregateRootId = aggregateRootId,
                             MinVersion = minVersion,
                             MaxVersion = maxVersion
                         }).ConfigureAwait(false);
-                        return result.Select(ConvertFrom);
+                       
+                        connection.Close();
                     }
+                     return result.Select(ConvertFrom);
                 }
                 catch (Exception ex)
                 {
@@ -226,9 +229,9 @@ namespace Enode.Ex.Npgsql
                     var transaction = await Task.Run(() => connection.BeginTransaction()).ConfigureAwait(false);
                     try
                     {
-                        //await connection.ExecuteAsync(sql, streamRecords, transaction: transaction, commandTimeout: _batchInsertTimeoutSeconds).ConfigureAwait(false);
+                        await connection.ExecuteAsync(sql, streamRecords, transaction: transaction, commandTimeout: _batchInsertTimeoutSeconds).ConfigureAwait(false);
 
-                        BulkInsert(connection, aggregateRootId, streamRecords);
+                        //BulkInsert(connection, aggregateRootId, streamRecords);
 
                         await Task.Run(() => transaction.Commit()).ConfigureAwait(false);
 
@@ -250,11 +253,11 @@ namespace Enode.Ex.Npgsql
             }
             catch (NpgsqlException ex)
             {
-                if (ex.ErrorCode == 23505 && ex.Message.Contains(_versionIndexName))
+                if(ex.SqlState == "23505" && ex.Message.Contains(_versionIndexName))
                 {
                     return EventAppendStatus.DuplicateEvent;
                 }
-                if (ex.ErrorCode == 23505 && ex.Message.Contains(_commandIndexName))
+                if(ex.SqlState == "23505" && ex.Message.Contains(_commandIndexName))
                 {
                     return EventAppendStatus.DuplicateCommand;
                 }

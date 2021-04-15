@@ -41,7 +41,7 @@ namespace Enode.Ex.Npgsql
             Ensure.Positive(_tableCount, "_tableCount");
             Ensure.NotNull(_uniqueIndexName, "_uniqueIndexName");
 
-            _uniqueIndexName = $"\"{uniqueIndexName}\"";
+            //_uniqueIndexName = $"\"{uniqueIndexName}\"";
 
             _logger = ObjectContainer.Resolve<ILoggerFactory>().Create(GetType().FullName);
             _timeProvider = ObjectContainer.Resolve<ITimeProvider>();
@@ -75,7 +75,7 @@ namespace Enode.Ex.Npgsql
                     }
                     catch (NpgsqlException ex)
                     {
-                        if (ex.ErrorCode == 23505 && ex.Message.Contains(_uniqueIndexName))
+                        if (ex.SqlState == "23505" && ex.Message.Contains(_uniqueIndexName))
                         {
                             return;
                         }
@@ -140,7 +140,8 @@ namespace Enode.Ex.Npgsql
                             ProcessorName = processorName,
                             AggregateRootId = aggregateRootId
                         }, GetTableName(aggregateRootId), "\"Version\"").ConfigureAwait(false);
-                        return result.SingleOrDefault();
+                        var v = result.SingleOrDefault();
+                        return v;
                     }
                 }
                 catch (NpgsqlException ex)
